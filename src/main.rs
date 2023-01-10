@@ -128,7 +128,7 @@ fn pick() -> anyhow::Result<()> {
 
     rofi.stdin.take().unwrap().write_all(&rofi_input)?;
 
-    let stdout  = String::from_utf8_lossy(&rofi.wait_with_output()?.stdout).into_owned();
+    let stdout = String::from_utf8_lossy(&rofi.wait_with_output()?.stdout).into_owned();
     let index_from_end: usize = stdout.split(":").nth(0).unwrap().parse()?;
     restore_record(history.into_iter().rev().nth(index_from_end).unwrap())?;
     println!("{:?}", index_from_end);
