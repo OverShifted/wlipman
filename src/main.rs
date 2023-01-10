@@ -141,6 +141,7 @@ fn help(exec_path: &str) {
     eprintln!("\nWhere COMMAND is one of the following:");
     eprintln!("\t-h, --help, help\tShows this message.");
     eprintln!("\tstore\t\t\tAppends current clipboard state to history file.");
+    eprintln!("\tpick\t\t\tOpens a rofi dialog to choose a clipboard entry.");
     eprintln!("\tstorage\t\t\tPrints history file's path.");
 }
 
