@@ -8,7 +8,7 @@ edition = "2021"
 [dependencies]
 # wl-clipboard-rs = "0"
 wl-clipboard-rs = { git = "https://github.com/OverShifted/wl-clipboard-rs/" }
-anyhow = "1"
+anyhow = { version = "1", features = ["backtrace"] }
 serde = "1"
-serde_json = "1"
+rmp-serde = "1"
 dirs = "4"

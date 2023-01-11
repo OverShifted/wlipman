@@ -14,15 +14,23 @@ pub type ClipboardRecord = HashMap<String, Vec<u8>>;
 pub type ClipboardHistory = Vec<ClipboardRecord>;
 
 fn get_storage_path() -> PathBuf {
-    dirs::cache_dir().unwrap().join(Path::new("wlipman.json"))
+    dirs::cache_dir().unwrap().join(Path::new("wlipman.msgpck"))
 }
 
 fn load_history() -> anyhow::Result<ClipboardHistory> {
-    serde_json::from_str(&std::fs::read_to_string(get_storage_path())?).map_err(|err| err.into())
+    let file = std::fs::read(get_storage_path())?;
+    // For some reason rmp_serde::from_read is too slow
+    match rmp_serde::from_slice(&file) {
+        Ok(i) => Ok(i),
+        Err(e) => {
+            println!("{:?}", e);
+            Err(e.into())
+        }
+    }
 }
 
 fn dump_history(history: &ClipboardHistory) -> anyhow::Result<()> {
-    let dump = serde_json::to_string(history)?;
+    let dump = rmp_serde::to_vec(history)?;
     std::fs::write(get_storage_path(), &dump)?;
 
     Ok(())
@@ -46,13 +54,14 @@ fn create_record() -> anyhow::Result<ClipboardRecord> {
     let mut all_mimes : ClipboardRecord = HashMap::new();
 
     for mime in mimes.into_iter() {
+        // Requesting SAVE_TARGET from firefox will hang
         if &mime == "SAVE_TARGETS" {
             continue;
         }
-        println!("Going for: {}", mime);
+
+        println!("Storing mimetype: {}", mime);
         match read_mime(&mime) {
             Ok(contents) => {
-                // println!("Inserted: {}", t);
                 all_mimes.insert(mime, contents);
             },
             Err(_) => ()
@@ -69,8 +78,10 @@ fn stringify_record(index: usize, record: &ClipboardRecord) -> String {
     } else if record.contains_key("text/plain".into()) {
         String::from_utf8_lossy(record.get("text/plain").unwrap()).into_owned()
     } else {
-        "".into()
+        "<non text data>".into()
     };
+
+    // Uncommenting following lines will cause issues with the text/icon mime
 
     // for (mime, contents) in record.iter() {
     //     if mime != "text/ico" && wl_clipboard_rs::utils::is_text(mime) {
@@ -103,7 +114,7 @@ fn store() -> anyhow::Result<()> {
 
     // TODO: This assumes that `~/.cache` already exists. Is that fine?
     if !storage_path.exists() {
-        std::fs::write(storage_path, "[]")?;
+        clean()?;
     }
 
     let mut history = load_history()?;
@@ -130,8 +141,8 @@ fn pick() -> anyhow::Result<()> {
 
     let stdout = String::from_utf8_lossy(&rofi.wait_with_output()?.stdout).into_owned();
     let index_from_end: usize = stdout.split(":").nth(0).unwrap().parse()?;
+    println!("Restoring {:?}th item.", index_from_end);
     restore_record(history.into_iter().rev().nth(index_from_end).unwrap())?;
-    println!("{:?}", index_from_end);
 
     Ok(())
 }
@@ -143,6 +154,12 @@ fn help(exec_path: &str) {
     eprintln!("\tstore\t\t\tAppends current clipboard state to history file.");
     eprintln!("\tpick\t\t\tOpens a rofi dialog to choose a clipboard entry.");
     eprintln!("\tstorage\t\t\tPrints history file's path.");
+    eprintln!("\tclean\t\t\tClears clipboard history.");
+}
+
+fn clean() -> anyhow::Result<()> {
+    std::fs::write(get_storage_path(), rmp_serde::to_vec(&ClipboardHistory::new())?)?;
+    Ok(())
 }
 
 fn main() -> anyhow::Result<()> {
@@ -158,6 +175,7 @@ fn main() -> anyhow::Result<()> {
         "store" => store()?,
         "pick" => pick()?,
         "storage" => println!("{}", get_storage_path().to_str().unwrap()),
+        "clean" => clean()?,
         cmd => eprintln!("Unknown command: '{}'.\nRun '{} -h' for help.", cmd, &args[0])
     };
 
