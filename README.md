@@ -2,7 +2,12 @@
 A simple clipboard manager for wayland.
 
 ## Installation
-Currently, you shoud compile Wlipman yourself. But I'm working on an AUR package.
+Just compile it yourself or install the AUR package:
+```
+paru -S wlipman-git
+# or
+yay -S wlipman-git
+```
 
 ## Usage
 1. Run `wl-paste -w path/to/wlipman store` on startup. It will save your clipboard state whenever you copy something.
