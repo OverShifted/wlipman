@@ -3,7 +3,7 @@ A simple clipboard manager for wayland.
 
 ## Installation
 Just compile it yourself or install the AUR package:
-```
+```sh
 paru -S wlipman-git
 # or
 yay -S wlipman-git
