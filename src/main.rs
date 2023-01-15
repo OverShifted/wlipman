@@ -103,6 +103,7 @@ fn restore_record(record: ClipboardRecord) -> anyhow::Result<()> {
         }).collect();
     
     let mut opts = Options::new();
+    opts.omit_additional_text_mime_types(true);
     opts.foreground(true);
     opts.copy_multi(all_mimes)?;
 
