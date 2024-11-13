@@ -1,4 +1,4 @@
-# Wpilman
+# Wlipman
 A simple clipboard manager for wayland.
 
 ## Installation
